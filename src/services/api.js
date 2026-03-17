@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 async function getAuthToken() {
   const user = auth.currentUser;
   if (!user) {
-    throw new Error("User not authenticated");
+    return null;
   }
   return await user.getIdToken();
 }
@@ -20,13 +20,19 @@ async function apiRequest(endpoint, options = {}) {
   try {
     const token = await getAuthToken();
 
+    const headers = {
+      "Content-Type": "application/json",
+      ...options.headers,
+    };
+
+    // Add authorization header if token is available
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...options.headers,
-      },
+      headers,
     });
 
     // Parse response body

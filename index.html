@@ -2,31 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/logo1.png" type="image/png" sizes="16x16" />
+    <link rel="icon" type="image/svg+xml" href="logo1.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nutricycle Admin</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    
-    <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("in-view");
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
-    );
-
-    document.querySelectorAll(".scroll-animate").forEach((el) => {
-      observer.observe(el);
-    });
-  });
-</script>
   </body>
 </html>

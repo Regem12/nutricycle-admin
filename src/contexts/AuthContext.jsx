@@ -13,9 +13,36 @@ import { auth } from "@/config/firebase";
 
 const AuthContext = createContext(null);
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authDisabled, setAuthDisabled] = useState(null); // null = checking, true/false = result
+
+  // Check if auth is disabled on mount (only once)
+  useEffect(() => {
+    const checkAuthDisabled = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        const response = await fetch(`${API_URL}/admin/verify`, {
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+        });
+
+        clearTimeout(timeoutId);
+        setAuthDisabled(response.ok);
+      } catch (error) {
+        // Timeout or error - assume auth is enabled (safer default)
+        console.debug("Auth disabled check error:", error.message);
+        setAuthDisabled(false);
+      }
+    };
+
+    checkAuthDisabled();
+  }, []);
 
   useEffect(() => {
     // Listen to Firebase auth state changes
@@ -228,6 +255,7 @@ export function AuthProvider({ children }) {
     resetPassword,
     verifyResetCode,
     confirmPasswordReset,
+    authDisabled,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

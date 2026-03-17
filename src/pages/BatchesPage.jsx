@@ -36,7 +36,7 @@ const normalizeStatus = (status) => {
 
 export default function BatchesPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   // Pre-filter by machine when navigated from MachinesPage
   const [machineIdFilter, setMachineIdFilter] = useState(
@@ -159,6 +159,11 @@ export default function BatchesPage() {
     setFilterStatus("all");
     setSortBy("newest");
     setMachineIdFilter("");
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("machineId");
+      return next;
+    });
   };
 
   const hasActiveFilters =
@@ -171,6 +176,11 @@ export default function BatchesPage() {
   useEffect(() => {
     fetchBatches();
   }, [fetchBatches]);
+
+  // Keep machine filter in sync with URL query parameter
+  useEffect(() => {
+    setMachineIdFilter(searchParams.get("machineId") || "");
+  }, [searchParams]);
 
   // Auto-refresh for active batches (every 10 seconds)
   // Uses fetchBatches from useCallback so the interval never captures a stale closure
@@ -587,11 +597,17 @@ export default function BatchesPage() {
                                 e.stopPropagation();
                                 const mid =
                                   batch.machine?.machineId || batch.machineId;
-                                if (mid)
-                                  navigate(`/admin/machines?search=${mid}`);
+                                if (!mid) return;
+
+                                setMachineIdFilter(mid);
+                                setSearchParams((prev) => {
+                                  const next = new URLSearchParams(prev);
+                                  next.set("machineId", mid);
+                                  return next;
+                                });
                               }}
                               className="flex items-center gap-2 hover:text-green-600 transition-colors group"
-                              title="View machine"
+                              title="Filter by this machine"
                             >
                               <Cpu className="w-4 h-4 text-gray-400 group-hover:text-green-500" />
                               <span className="text-sm font-medium text-gray-900 group-hover:underline">

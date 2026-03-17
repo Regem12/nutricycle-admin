@@ -174,7 +174,10 @@ export function AuthProvider({ children }) {
 
   const resetPassword = async (email) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, email, {
+        // After password reset completion, return user to admin app
+        url: "https://nutricycle-admin.vercel.app/",
+      });
       return { success: true };
     } catch (error) {
       console.error("Password reset error:", error);

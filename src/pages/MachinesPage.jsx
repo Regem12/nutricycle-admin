@@ -1036,11 +1036,12 @@ export default function MachinesPage() {
                     {selectedMachine.batches.slice(0, 5).map((batch) => (
                       <div
                         key={batch.id}
-                        onClick={() =>
+                        onClick={() => {
+                          setShowDetailsModal(false);
                           navigate(
-                            `/admin/batches?machineId=${selectedMachine.machineId}`,
-                          )
-                        }
+                            `/batches?machineId=${encodeURIComponent(selectedMachine.machineId)}`,
+                          );
+                        }}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                       >
                         <div>
@@ -1109,7 +1110,7 @@ export default function MachinesPage() {
                 onClick={() => {
                   setShowDetailsModal(false);
                   navigate(
-                    `/admin/batches?machineId=${selectedMachine.machineId}`,
+                    `/batches?machineId=${encodeURIComponent(selectedMachine.machineId)}`,
                   );
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"

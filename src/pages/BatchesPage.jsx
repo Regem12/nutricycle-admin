@@ -44,6 +44,7 @@ export default function BatchesPage() {
   );
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedBatch, setSelectedBatch] = useState(null);
+  const autoSelectBatchNumber = searchParams.get("batchId");
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -181,6 +182,22 @@ export default function BatchesPage() {
   useEffect(() => {
     setMachineIdFilter(searchParams.get("machineId") || "");
   }, [searchParams]);
+
+  // Auto-select batch from URL parameter when navigated from Dashboard
+  useEffect(() => {
+    if (autoSelectBatchNumber && batches.length > 0 && !selectedBatch) {
+      const batch = batches.find((b) => b.batchNumber === autoSelectBatchNumber);
+      if (batch) {
+        setSelectedBatch(batch);
+        // Clean up the URL parameter
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("batchId");
+          return next;
+        });
+      }
+    }
+  }, [autoSelectBatchNumber, batches, selectedBatch, setSearchParams]);
 
   // Auto-refresh for active batches (every 10 seconds)
   // Uses fetchBatches from useCallback so the interval never captures a stale closure

@@ -236,15 +236,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:border-green-600 hover:text-green-600 transition-all shadow-sm hover:shadow-md"
-          >
-            ← Back to main site
-          </Link>
-        </div>
       </div>
 
       {/* Forgot Password Modal */}

@@ -485,7 +485,7 @@ export default function DashboardPage() {
                     Recent Batches
                   </h3>
                   <button
-                    onClick={() => navigate("/admin/batches")}
+                    onClick={() => navigate("/batches")}
                     className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
                   >
                     View All
@@ -501,7 +501,7 @@ export default function DashboardPage() {
                     recentBatches.map((batch) => (
                       <div
                         key={batch.id}
-                        onClick={() => navigate("/admin/batches")}
+                        onClick={() => navigate(`/batches?batchId=${batch.batchNumber}`)}
                         className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
                       >
                         <div className="flex items-center gap-3">
@@ -594,7 +594,7 @@ export default function DashboardPage() {
                     Machine Status
                   </h3>
                   <button
-                    onClick={() => navigate("/admin/machines")}
+                    onClick={() => navigate("/machines")}
                     className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
                   >
                     View All
@@ -612,7 +612,7 @@ export default function DashboardPage() {
                         key={machine.id}
                         onClick={() =>
                           navigate(
-                            `/admin/machines?search=${encodeURIComponent(machine.machineId)}`,
+                            `/machines?search=${encodeURIComponent(machine.machineId)}&machineId=${machine.id}`,
                           )
                         }
                         className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"

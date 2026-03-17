@@ -36,7 +36,7 @@ import toast from "react-hot-toast";
 
 export default function MachinesPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Pre-populate search from URL param (e.g. navigated from BatchesPage machine link)
   const [searchTerm, setSearchTerm] = useState(
     () => searchParams.get("search") || "",
@@ -47,6 +47,7 @@ export default function MachinesPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState(null);
+  const autoSelectMachineId = searchParams.get("machineId");
   const [machineToArchive, setMachineToArchive] = useState(null);
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,23 @@ export default function MachinesPage() {
   useEffect(() => {
     fetchMachines();
   }, [fetchMachines]);
+
+  // Auto-select and open machine details from URL parameter when navigated from Dashboard
+  useEffect(() => {
+    if (autoSelectMachineId && machines.length > 0 && !selectedMachine) {
+      const machine = machines.find((m) => m.id === autoSelectMachineId);
+      if (machine) {
+        setSelectedMachine(machine);
+        setShowDetailsModal(true);
+        // Remove one-time auto-open param so close action doesn't reopen modal
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("machineId");
+          return next;
+        });
+      }
+    }
+  }, [autoSelectMachineId, machines, selectedMachine, setSearchParams]);
 
   const filteredMachines = machines
     .filter((machine) => {

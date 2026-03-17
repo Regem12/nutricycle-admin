@@ -501,7 +501,9 @@ export default function DashboardPage() {
                     recentBatches.map((batch) => (
                       <div
                         key={batch.id}
-                        onClick={() => navigate(`/batches?batchId=${batch.batchNumber}`)}
+                        onClick={() =>
+                          navigate(`/batches?batchId=${batch.batchNumber}`)
+                        }
                         className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
                       >
                         <div className="flex items-center gap-3">

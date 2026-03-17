@@ -186,7 +186,9 @@ export default function BatchesPage() {
   // Auto-select batch from URL parameter when navigated from Dashboard
   useEffect(() => {
     if (autoSelectBatchNumber && batches.length > 0 && !selectedBatch) {
-      const batch = batches.find((b) => b.batchNumber === autoSelectBatchNumber);
+      const batch = batches.find(
+        (b) => b.batchNumber === autoSelectBatchNumber,
+      );
       if (batch) {
         setSelectedBatch(batch);
         // Clean up the URL parameter

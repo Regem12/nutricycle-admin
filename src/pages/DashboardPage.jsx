@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -12,6 +12,8 @@ import {
   TrendingDown,
   Clock,
   AlertTriangle,
+  Calendar,
+  X,
 } from "lucide-react";
 import {
   LineChart,
@@ -86,24 +88,23 @@ const buildActivityTimeline = (batches, machines, detections) => {
   return activities.sort((a, b) => b.timestamp - a.timestamp);
 };
 
-// Build chart data for batch completions over last 7 days
-const buildChartData = (batches) => {
+// Build chart data for batch completions over a date range
+const buildChartData = (batches, startDate, endDate) => {
   const data = [];
-  const today = new Date();
+  let currentDate = new Date(startDate);
+  currentDate.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
 
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    date.setHours(0, 0, 0, 0);
-
-    const nextDate = new Date(date);
+  while (currentDate <= end) {
+    const nextDate = new Date(currentDate);
     nextDate.setDate(nextDate.getDate() + 1);
 
     const dayBatches = batches.filter((batch) => {
       const batchDate = batch.startedAt
         ? new Date(batch.startedAt)
         : new Date(batch.createdAt);
-      return batchDate >= date && batchDate < nextDate;
+      return batchDate >= currentDate && batchDate < nextDate;
     });
 
     const completed = dayBatches.filter(
@@ -117,7 +118,7 @@ const buildChartData = (batches) => {
     ).length;
 
     data.push({
-      date: date.toLocaleDateString("en-US", {
+      date: currentDate.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       }),
@@ -126,6 +127,8 @@ const buildChartData = (batches) => {
       failed,
       total: dayBatches.length,
     });
+
+    currentDate.setDate(currentDate.getDate() + 1);
   }
 
   return data;
@@ -147,6 +150,11 @@ export default function DashboardPage() {
   const [machines, setMachines] = useState([]);
   const [activityTimeline, setActivityTimeline] = useState([]);
   const [chartData, setChartData] = useState([]);
+  const [allBatchesData, setAllBatchesData] = useState([]);
+  const [chartFilterType, setChartFilterType] = useState("7days"); // "7days", "30days", "custom"
+  const [chartFilterStartDate, setChartFilterStartDate] = useState("");
+  const [chartFilterEndDate, setChartFilterEndDate] = useState("");
+  const [showChartDatePicker, setShowChartDatePicker] = useState(false);
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(async (isRefresh = false) => {
@@ -206,6 +214,9 @@ export default function DashboardPage() {
       // Get machines for status display
       setMachines(allMachines.slice(0, 5));
 
+      // Store all batches for filtering
+      setAllBatchesData(allBatches);
+
       // Build activity timeline
       const timeline = buildActivityTimeline(
         allBatches,
@@ -215,8 +226,18 @@ export default function DashboardPage() {
       setActivityTimeline(timeline.slice(0, 10));
 
       // Build chart data for last 7 days
-      const chart = buildChartData(allBatches);
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      const chart = buildChartData(allBatches, sevenDaysAgo, today);
       setChartData(chart);
+
+      // Initialize date range for custom filter
+      if (!chartFilterStartDate) {
+        setChartFilterStartDate(sevenDaysAgo.toISOString().slice(0, 10));
+      }
+      if (!chartFilterEndDate) {
+        setChartFilterEndDate(today.toISOString().slice(0, 10));
+      }
 
       if (isRefresh) {
         toast.success("Dashboard refreshed");
@@ -238,6 +259,36 @@ export default function DashboardPage() {
   const handleRefresh = () => {
     fetchDashboardData(true);
   };
+
+  // Update chart based on selected filter
+  const filteredChartData = useMemo(() => {
+    if (chartFilterType === "7days") {
+      const today = new Date();
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      return buildChartData(allBatchesData, sevenDaysAgo, today);
+    } else if (chartFilterType === "30days") {
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      return buildChartData(allBatchesData, thirtyDaysAgo, today);
+    } else if (
+      chartFilterType === "custom" &&
+      chartFilterStartDate &&
+      chartFilterEndDate
+    ) {
+      const startDate = new Date(chartFilterStartDate);
+      const endDate = new Date(chartFilterEndDate);
+      return buildChartData(allBatchesData, startDate, endDate);
+    }
+    return chartData;
+  }, [
+    chartFilterType,
+    chartFilterStartDate,
+    chartFilterEndDate,
+    allBatchesData,
+    chartData,
+  ]);
 
   const formatTimeAgo = (dateString) => {
     if (!dateString) return "Unknown";
@@ -414,14 +465,97 @@ export default function DashboardPage() {
 
             {/* Activity Chart */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-900">
-                  Batch Activity (Last 7 Days)
+                  Batch Activity
                 </h3>
               </div>
-              {chartData.length > 0 ? (
+
+              {/* Chart Filter Controls */}
+              <div className="mb-6 space-y-3">
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setChartFilterType("7days");
+                      setShowChartDatePicker(false);
+                    }}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      chartFilterType === "7days"
+                        ? "bg-green-100 text-green-700 ring-1 ring-green-300"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Last 7 Days
+                  </button>
+                  <button
+                    onClick={() => {
+                      setChartFilterType("30days");
+                      setShowChartDatePicker(false);
+                    }}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      chartFilterType === "30days"
+                        ? "bg-green-100 text-green-700 ring-1 ring-green-300"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Last 30 Days
+                  </button>
+                  <button
+                    onClick={() => {
+                      setChartFilterType("custom");
+                      setShowChartDatePicker(!showChartDatePicker);
+                    }}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                      chartFilterType === "custom"
+                        ? "bg-green-100 text-green-700 ring-1 ring-green-300"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <Calendar className="w-3 h-3" />
+                    Custom Date
+                  </button>
+                </div>
+
+                {/* Custom Date Range Picker */}
+                {showChartDatePicker && chartFilterType === "custom" && (
+                  <div className="flex gap-3 items-center p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-600">
+                        From:
+                      </label>
+                      <input
+                        type="date"
+                        value={chartFilterStartDate}
+                        onChange={(e) =>
+                          setChartFilterStartDate(e.target.value)
+                        }
+                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-600">
+                        To:
+                      </label>
+                      <input
+                        type="date"
+                        value={chartFilterEndDate}
+                        onChange={(e) => setChartFilterEndDate(e.target.value)}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setShowChartDatePicker(false)}
+                      className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {filteredChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData}>
+                  <LineChart data={filteredChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis
                       dataKey="date"

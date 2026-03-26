@@ -33,7 +33,7 @@ export default function LoginPage() {
       navigate("/dashboard", { replace: true });
     } else if (loginAttempted && !loading && !user) {
       // Login was attempted, auth finished processing, but no user = no admin claim
-      setError("Admin access required. You do not have admin privileges.");
+      setError("Invalid email or password. Please try again.");
       setIsLoading(false);
       setLoginAttempted(false);
     }
@@ -58,7 +58,7 @@ export default function LoginPage() {
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Please check your password and try again");
       setIsLoading(false);
       return;
     }

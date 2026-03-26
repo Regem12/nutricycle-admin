@@ -102,24 +102,15 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Login error:", error);
 
-      // Handle specific Firebase errors
-      let errorMessage = "Login failed. Please try again.";
+      // Generic error message for security (don't reveal if email exists)
+      let errorMessage = "Invalid email or password. Please try again.";
 
-      if (
-        error.code === "auth/user-not-found" ||
-        error.code === "auth/invalid-credential"
-      ) {
-        errorMessage =
-          "No account found with this email. Click 'Create Account' below to sign up first.";
-      } else if (error.code === "auth/wrong-password") {
-        errorMessage = "Incorrect password. Please try again.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email address.";
-      } else if (error.code === "auth/too-many-requests") {
+      // Only show specific message for rate limiting
+      if (error.code === "auth/too-many-requests") {
         errorMessage = "Too many failed attempts. Please try again later.";
-      } else if (error.code === "auth/user-disabled") {
+      } else if (error.code === "auth/network-request-failed") {
         errorMessage =
-          "This account has been disabled. Please contact support.";
+          "Network error. Please check your connection and try again.";
       }
 
       return { success: false, error: errorMessage };
@@ -182,17 +173,14 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Password reset error:", error);
 
-      let errorMessage = "Failed to send password reset email.";
+      // Generic message for security - doesn't reveal if account exists
+      let errorMessage =
+        "If an account exists with this email, you will receive a password reset link.";
 
-      if (error.code === "auth/user-not-found") {
-        errorMessage = "No account found with this email address.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email address.";
-      } else if (error.code === "auth/too-many-requests") {
+      // Only show specific messages for rate limiting and network errors
+      if (error.code === "auth/too-many-requests") {
         errorMessage =
           "Too many password reset attempts. Please wait a few minutes and try again.";
-      } else if (error.code === "auth/quota-exceeded") {
-        errorMessage = "Password reset quota exceeded. Please try again later.";
       } else if (error.code === "auth/network-request-failed") {
         errorMessage =
           "Network error. Please check your connection and try again.";
